@@ -1,2 +1,0 @@
-- [x] Fix the 'link' field in lib/validation.tsx by simplifying it to `z.string().url()` to remove syntax errors and async issues.
-- [x] Fix the import in components/StartupForm.tsx from "@/lib/validation" to "@/lib/validation.tsx".
