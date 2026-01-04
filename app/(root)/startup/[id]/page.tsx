@@ -73,7 +73,7 @@ const page = async ({params}:{params: Promise<{id:string}>}) => {
           </div>
         )}
       <Suspense fallback={<Skeleton className="view_skeleton"/>}>
-      <View id={id} views={post.views} />
+      <View id={id} />
       </Suspense>
     </section>
     </>

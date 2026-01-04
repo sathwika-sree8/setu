@@ -6,9 +6,8 @@ import { writeClient } from '@/sanity/lib/write-client';
 
 interface ViewProps {
   id: string;
-  views: number;
 }
-const View = async ({ id, views }: ViewProps) => {
+const View = async ({ id }: ViewProps) => {
   const result = await client.withConfig(
     {useCdn:false}).fetch(STARTUP_VIEWS_QUERY,{id});
 
