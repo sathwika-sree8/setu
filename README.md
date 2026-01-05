@@ -2,6 +2,8 @@
 
 A modern platform for pitching startups, connecting with entrepreneurs, submitting innovative ideas, and voting on pitches. Built with Next.js, Sanity CMS, and NextAuth for seamless user experience.
 
+**Deployed using vercel** : https://setu-five.vercel.app/ 
+
 ## Features
 
 - **Pitch Startups**: Submit your startup ideas with detailed descriptions and pitches
