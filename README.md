@@ -1,162 +1,249 @@
-# Setu
+# SETU - Startup Investment Platform
 
-A modern platform for pitching startups, connecting with entrepreneurs, submitting innovative ideas, and voting on pitches. Built with Next.js, Sanity CMS, and NextAuth for seamless user experience.
-
-**Deployed using vercel** : https://setu-five.vercel.app/ 
+A comprehensive startup investment platform that connects founders with investors, facilitating the entire investment deal lifecycle from initial contact to deal closure.
 
 ## Features
 
-- **Pitch Startups**: Submit your startup ideas with detailed descriptions and pitches
-- **Browse & Search**: Discover startups by category or search functionality
-- **User Authentication**: Secure login via GitHub OAuth
-- **CMS Integration**: Powered by Sanity for content management
-- **Real-time Updates**: Live data fetching with Sanity Live
-- **Responsive Design**: Mobile-first design using Tailwind CSS
-- **Markdown Support**: Rich text editing for pitches and descriptions
-- **User Profiles**: View author profiles and their startups
-- **Voting System**: Engage with community by voting on pitches
+### 1. **Startup Discovery & Management**
+- Browse and search startups by category/sector
+- Startup profiles with descriptions, logos, and websites
+- Sanity CMS integration for content management
+- Real-time data with Sanity Live
+
+### 2. **Investment Deal Flow**
+- **Request System**: Investors send connection requests to founders
+- **Deal Rooms**: Private chat spaces for investor-founder discussions
+- **Deal Acceptance**: Founders accept deals with investment terms (amount, equity %, deal stage, investment type)
+- **Investment Tracking**: Records investments with full details (SAFE, Convertible Note, Equity, Direct Investment)
+
+### 3. **Portfolio Management (Investors)**
+- View total invested amount
+- Track active investments count
+- Private notes per startup (investor-only)
+- Rate founders (Communication, Transparency, Execution)
+- View founder ratings and metrics
+
+### 4. **Founder Metrics**
+- Investors onboarded count
+- Deal conversion rate percentage
+- Update frequency tracking
+- Performance analytics
+
+### 5. **Communication System**
+- Real-time chat between investors and founders
+- Chat bubbles with read status
+- Floating chat widget for easy access
+- Message history per relationship
+
+### 6. **Startup Updates Feed**
+- Founders post updates (Revenue, Fundraising, Product, Hiring, Risks, General)
+- Visibility controls (Public / Investors Only)
+- Like and comment system with sentiment analysis
+- Founder posts and global posts
+
+### 7. **AI-Powered Assistant**
+- **Intent Detection**: Identifies query types (investments, revenue, updates, startup info)
+- **Context-Aware Responses**: Uses embeddings for semantic search
+- **Groq LLM Integration**: Llama 3.1 8B for fast responses
+- **Floating AI Bot**: Always accessible chat assistant
+- **Freshness Detection**: Warns about stale data
+
+### 8. **User Roles & Authentication**
+- **Clerk Authentication**: GitHub OAuth
+- **Role System**: INVESTOR / FOUNDER
+- **User Profiles**: With startup associations
 
 ## Tech Stack
 
-- **Frontend**: Next.js 16, React 19, TypeScript
-- **Styling**: Tailwind CSS, Radix UI components
-- **CMS**: Sanity v4
-- **Authentication**: NextAuth.js with GitHub provider
-- **Database**: Sanity's hosted database
-- **Deployment**: Vercel-ready
-- **Monitoring**: Sentry integration
-- **Fonts**: Custom Work Sans font family
+| Layer | Technology |
+|-------|------------|
+| **Framework** | Next.js 16 (App Router) |
+| **Language** | TypeScript |
+| **Database** | PostgreSQL + Prisma ORM |
+| **Authentication** | Clerk |
+| **CMS** | Sanity v4 |
+| **AI/LLM** | Groq (Llama 3.1) + OpenAI Embeddings |
+| **Styling** | Tailwind CSS + Radix UI |
+| **Monitoring** | Sentry |
+| **Deployment** | Vercel-ready |
 
-## Prerequisites
+## Database Schema
 
-Before running this project, make sure you have the following installed:
+### Core Models
+- **User** - Investors and founders with roles
+- **Startup** - Startup profiles and data
+- **FounderPost** - Posts from founders about startups
+- **Like / Comment** - Social engagement with sentiment analysis
+- **StartupRelationship** - Connection between investors and startups
+- **Message** - Chat messages within relationships
+- **Investment** - Investment records with terms
+- **Rating** - Founder ratings by investors
+- **PrivateNote** - Investor-private notes per startup
+- **StartupUpdate** - Updates with visibility controls
+- **AIDocument** - Vector embeddings for AI context (1536 dimensions)
+- **AIChatMemory** - Chat history for AI context
+- **Notification** - User notifications
 
-- Node.js (version 18 or higher)
-- npm or yarn package manager
-- A Sanity account and project
-- A GitHub OAuth app for authentication
+### Deal Stages
+- PRE_SEED → SEED → SERIES_A → SERIES_B → SERIES_C → LATE → IPO
 
-## Installation
+### Investment Types
+- SAFE, Convertible Note, Equity, Direct Investment
 
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd yc_directory
-   ```
+### Update Types
+- REVENUE, FUNDRAISING, PRODUCT, HIRING, RISKS, GENERAL
 
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
-
-3. **Set up environment variables**
-
-   Create a `.env.local` file in the root directory and add the following variables:
-
-   ```env
-   # Sanity Configuration
-   NEXT_PUBLIC_SANITY_PROJECT_ID=your_sanity_project_id
-   NEXT_PUBLIC_SANITY_DATASET=production
-   NEXT_PUBLIC_SANITY_API_VERSION=2025-12-31
-   SANITY_WRITE_TOKEN=your_sanity_write_token
-
-   # NextAuth Configuration
-   NEXTAUTH_SECRET=your_nextauth_secret
-   NEXTAUTH_URL=http://localhost:3000
-
-   # GitHub OAuth
-   GITHUB_CLIENT_ID=your_github_client_id
-   GITHUB_CLIENT_SECRET=your_github_client_secret
-   ```
-
-4. **Set up Sanity**
-
-   - Create a new Sanity project at [sanity.io](https://sanity.io)
-   - Configure your dataset and get your project ID
-   - Generate a write token with appropriate permissions
-
-5. **Set up GitHub OAuth**
-
-   - Go to GitHub Settings > Developer settings > OAuth Apps
-   - Create a new OAuth app
-   - Set Authorization callback URL to `http://localhost:3000/api/auth/callback/github`
-
-## Running the Application
-
-1. **Start the development server**
-   ```bash
-   npm run dev
-   ```
-
-2. **Open Sanity Studio** (in a separate terminal)
-   ```bash
-   npm run sanity
-   ```
-
-3. **Access the application**
-   - Main app: [http://localhost:3000](http://localhost:3000)
-   - Sanity Studio: [http://localhost:3000/studio](http://localhost:3000/studio)
+### Visibility Levels
+- PUBLIC, INVESTORS_ONLY
 
 ## Project Structure
 
 ```
-yc_directory/
-├── app/                    # Next.js app directory
-│   ├── (root)/            # Main application routes
+├── app/                    # Next.js App Router
+│   ├── (root)/            # Main routes
 │   ├── api/               # API routes
-│   └── studio/            # Sanity Studio route
-├── components/            # Reusable React components
-├── lib/                   # Utility functions and configurations
-├── sanity/                # Sanity CMS configuration
-│   ├── lib/              # Sanity client and queries
+│   │   ├── ai/            # AI endpoints
+│   │   ├── chat/          # Chat endpoints
+│   │   └── sync-author/   # Sanity sync
+│   ├── actions/           # Server actions
+│   │   ├── ai/            # AI actions
+│   │   ├── chat.ts
+│   │   ├── dealRoom.ts
+│   │   ├── portfolio.ts
+│   │   ├── requests.ts
+│   │   └── relationships.ts
+│   ├── deal-room/         # Deal rooms
+│   ├── founder/           # Founder pages
+│   ├── investor/          # Investor pages
+│   └── notifications/     # Notifications
+├── components/            # React components
+│   ├── chat/              # Chat components
+│   ├── portfolio/         # Portfolio components
+│   ├── requests/          # Request components
+│   └── ui/                # UI primitives
+├── lib/                   # Utilities
+│   ├── ai/               # AI/LLM utilities
+│   │   ├── embeddings.ts
+│   │   └── groq.ts
+│   └── types/            # TypeScript types
+├── prisma/               # Database schema
+├── sanity/               # CMS configuration
+│   ├── lib/              # Sanity client
 │   └── schemaTypes/      # Content schemas
-├── public/                # Static assets
-└── hooks/                 # Custom React hooks
+├── hooks/                # Custom React hooks
+└── public/               # Static assets
 ```
 
-## Key Components
+## Getting Started
 
-- **StartupCard**: Displays individual startup information
-- **StartupForm**: Form for creating/editing startups
-- **SearchForm**: Search functionality across startups
-- **Navbar**: Main navigation component
-- **UserStartups**: Displays user's submitted startups
+### Prerequisites
+- Node.js (version 18 or higher)
+- PostgreSQL database
+- Clerk account
+- Sanity project
+- Groq API key
 
-## Sanity Schemas
+### Installation
 
-The project uses the following Sanity document types:
+```bash
+# Install dependencies
+npm install
 
-- **Startup**: Main content type for startup pitches
-- **Author**: User profiles linked to GitHub accounts
-- **Playlist**: (Future feature for organizing startups)
+# Start development server
+npm run dev
+
+# Start Sanity Studio (separate terminal)
+npm run sanity
+```
+
+### Environment Variables
+
+Create a `.env.local` file with:
+
+```env
+# Database
+DATABASE_URL="postgresql://..."
+
+# Clerk Authentication
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=...
+CLERK_SECRET_KEY=...
+
+# Sanity CMS
+NEXT_PUBLIC_SANITY_PROJECT_ID=...
+NEXT_PUBLIC_SANITY_DATASET=production
+SANITY_WRITE_TOKEN=...
+
+# AI/LLM
+GROQ_API_KEY=...
+
+# Sentry (Optional)
+SENTRY_DSN=...
+
+# NextAuth (Legacy)
+NEXTAUTH_SECRET=...
+NEXTAUTH_URL=http://localhost:3000
+```
+
+## Key Pages
+
+| Route | Description |
+|-------|-------------|
+| `/` | Startup directory/feed |
+| `/startup/[id]` | Startup detail page |
+| `/startup/[id]/feed` | Startup updates feed |
+| `/startup/create` | Create new startup |
+| `/user/me/portfolio` | Investor portfolio |
+| `/user/me/requests` | Manage investment requests |
+| `/founder/requests` | Founder request management |
+| `/investor/requests` | Investor request management |
+| `/deal-room/[relationshipId]` | Private deal room with chat |
+| `/notifications` | User notifications |
+
+## API & Server Actions
+
+### Chat API
+- `POST /api/chat/send` - Send message
+- `GET /api/chat/messages` - Get messages
+- `POST /api/chat/read` - Mark messages as read
+
+### AI API
+- `POST /api/ai/chat` - AI chat endpoint
+- Intent detection for personalized responses
+- Context retrieval with vector embeddings
+
+### Portfolio Actions
+- `getInvestorPortfolioStats()` - Get portfolio summary
+- `getPrivateNotes()` - Get private notes
+- `savePrivateNote()` / `deletePrivateNote()` - Manage notes
+- `submitRating()` - Rate founders
+
+### Deal Room Actions
+- `acceptDeal()` - Accept investment deal
+- `submitRating()` - Submit founder rating
+- Chat management
 
 ## Scripts
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run start` - Start production server
-- `npm run lint` - Run ESLint
-- `npm run sanity` - Start Sanity Studio
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start development server |
+| `npm run build` | Build for production |
+| `npm run start` | Start production server |
+| `npm run lint` | Run ESLint |
+| `npm run sanity` | Start Sanity Studio |
 
 ## Deployment
 
 ### Vercel Deployment
-
 1. Connect your GitHub repository to Vercel
 2. Add environment variables in Vercel dashboard
 3. Deploy automatically on push
 
 ### Manual Deployment
-
-1. Build the application:
-   ```bash
-   npm run build
-   ```
-
-2. Start the production server:
-   ```bash
-   npm run start
-   ```
+```bash
+npm run build
+npm run start
+```
 
 ## Contributing
 
@@ -166,23 +253,12 @@ The project uses the following Sanity document types:
 4. Push to the branch: `git push origin feature/your-feature`
 5. Open a Pull Request
 
-## Environment Variables Reference
-
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `NEXT_PUBLIC_SANITY_PROJECT_ID` | Your Sanity project ID | Yes |
-| `NEXT_PUBLIC_SANITY_DATASET` | Sanity dataset name | Yes |
-| `SANITY_WRITE_TOKEN` | Sanity write token | Yes |
-| `NEXTAUTH_SECRET` | NextAuth secret key | Yes |
-| `NEXTAUTH_URL` | Base URL for NextAuth | Yes |
-| `GITHUB_CLIENT_ID` | GitHub OAuth client ID | Yes |
-| `GITHUB_CLIENT_SECRET` | GitHub OAuth client secret | Yes |
-
-
-
 ## Acknowledgments
 
 - Built with [Next.js](https://nextjs.org)
+- Authentication by [Clerk](https://clerk.com)
 - CMS powered by [Sanity](https://sanity.io)
-- Authentication by [NextAuth.js](https://next-auth.js.org)
+- AI/LLM powered by [Groq](https://groq.com)
 - UI components from [Radix UI](https://www.radix-ui.com)
+- Monitoring by [Sentry](https://sentry.io)
+

@@ -7,7 +7,7 @@ export async function sanityFetchStatic<T>({
   tags = [],
 }: {
   query: string;
-  params?: Record<string, any>;
+  params?: Record<string, unknown>;
   tags?: string[];
 }) {
   return {

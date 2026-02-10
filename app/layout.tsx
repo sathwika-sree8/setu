@@ -4,8 +4,13 @@ import "./globals.css";
 import localFont from "next/font/local";
 import "easymde/dist/easymde.min.css";
 import { Toaster } from "@/components/ui/toaster";
+import { ClerkProvider } from "@clerk/nextjs";
+import AuthSync from "@/components/AuthSync";
+import FloatingChat from "@/components/chat/FloatingChat";
+import FloatingAIBot from "@/app/actions/ai/FloatingAIBot";
 
-const workSans=localFont({
+const workSans = localFont({
+  display: "swap",
   src:[
     {
       path:'./fonts/WorkSans-Black.ttf',
@@ -43,7 +48,7 @@ const workSans=localFont({
       path:'./fonts/WorkSans-ExtraLight.ttf',
       weight:'100',
       style:'normal',
-    },    
+    },
   ],
   variable:'--font-work-sans',
 })
@@ -63,9 +68,15 @@ export default function RootLayout({
       <body
         className={workSans.variable}
       >
-        {children}
-        <Toaster />
+        <ClerkProvider>
+          <AuthSync />
+          {children}
+          <FloatingChat />
+          <FloatingAIBot />
+          <Toaster />
+        </ClerkProvider>
       </body>
     </html>
   );
 }
+

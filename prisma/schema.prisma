@@ -1,0 +1,227 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  clerkId   String   @unique
+  name      String?
+  email     String?
+  role      String?  // INVESTOR | FOUNDER
+  createdAt DateTime @default(now())
+
+  investments Investment[]
+  posts      FounderPost[]
+  updates    StartupUpdate[]
+}
+
+model Startup {
+  id          String   @id @default(cuid())
+  name        String
+  sector      String?
+  description String?
+  website     String?
+  logoUrl     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  investments  Investment[]
+  updates     StartupUpdate[]
+  posts       FounderPost[]
+}
+
+model FounderPost {
+  id        String   @id @default(cuid())
+  startupId String?
+  authorId  String
+  content   String
+  imageUrl  String?
+  createdAt DateTime @default(now())
+
+  likes    Like[]
+  comments Comment[]
+}
+
+model Like {
+  id        String   @id @default(cuid())
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  post FounderPost @relation(fields: [postId], references: [id])
+
+  @@unique([postId, userId])
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  postId    String
+  authorId  String
+  text      String
+  sentiment String?
+  createdAt DateTime @default(now())
+
+  post FounderPost @relation(fields: [postId], references: [id])
+}
+
+model StartupRelationship {
+  id         String             @id @default(cuid())
+  startupId  String
+  founderId  String
+  investorId String
+  status     RelationshipStatus
+  createdAt  DateTime           @default(now())
+  messages   Message[]
+
+  @@unique([startupId, investorId])
+}
+
+model Message {
+  id             String   @id @default(cuid())
+  relationshipId String
+  senderId       String
+  content        String
+  read           Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  relationship StartupRelationship @relation(fields: [relationshipId], references: [id])
+}
+
+enum RelationshipStatus {
+  PENDING
+  IN_DISCUSSION
+  DEAL_ACCEPTED
+  DEAL_REJECTED
+  CLOSED
+}
+
+enum DealStage {
+  PRE_SEED
+  SEED
+  SERIES_A
+  SERIES_B
+  SERIES_C
+  LATE
+  IPO
+}
+
+enum InvestmentType {
+  SAFE
+  CONVERTIBLE_NOTE
+  EQUITY
+  DIRECT_INVESTMENT
+}
+
+enum UpdateType {
+  REVENUE
+  FUNDRAISING
+  PRODUCT
+  HIRING
+  RISKS
+  GENERAL
+}
+
+enum UpdateVisibility {
+  PUBLIC
+  INVESTORS_ONLY
+}
+
+model Investment {
+  id                 String         @id @default(cuid())
+  investorId         String
+  startupId          String
+  amount             Float
+  equity             Float?
+  preMoneyValuation  Float?
+  postMoneyValuation Float?
+  dealStage          DealStage
+  investmentType     InvestmentType
+  round              String?
+  termsUrl           String?
+  notes              String?
+  createdAt          DateTime       @default(now())
+
+  investor User    @relation(fields: [investorId], references: [id])
+  startup Startup @relation(fields: [startupId], references: [id])
+
+  @@index([investorId])
+  @@index([startupId])
+}
+
+model Rating {
+  id          String   @id @default(cuid())
+  raterId     String
+  ratedUserId String
+  ratedRole   String
+  startupId   String?
+  score       Int
+  feedback    String?
+  createdAt   DateTime @default(now())
+
+  @@unique([raterId, ratedUserId, startupId])
+  @@index([ratedUserId])
+}
+
+model PrivateNote {
+  id         String   @id @default(cuid())
+  investorId String
+  startupId  String
+  content    String
+  createdAt DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([investorId, startupId])
+}
+
+model StartupUpdate {
+  id         String           @id @default(cuid())
+  startupId  String
+  authorId   String
+  title      String?
+  content    String
+  updateType UpdateType       @default(GENERAL)
+  visibility UpdateVisibility @default(PUBLIC)
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  @@index([startupId])
+  @@index([createdAt])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  message   String
+  link      String?
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+model AIDocument {
+  id         String   @id @default(cuid())
+  startupId  String?
+  type       String   // STARTUP | UPDATE | REVENUE
+  visibility String   // PUBLIC | INVESTORS_ONLY
+  content    String
+  embedding  Unsupported("vector(1536)")
+  createdAt  DateTime @default(now())
+
+  @@index([startupId])
+}
+
+model AIChatMemory {
+  id        String   @id @default(cuid())
+  userId    String
+  role      String   // INVESTOR | FOUNDER
+  question  String
+  answer    String
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+

@@ -8,6 +8,12 @@ export const author=defineType({
     icon: UserIcon,
     fields: [
         defineField({
+            name: "clerkId",
+            title: "Clerk User ID",
+            type: "string",
+            validation: (Rule) => Rule.required(),
+        }),
+        defineField({
             name:'id',
             type:'number',
         }),
@@ -18,6 +24,7 @@ export const author=defineType({
         defineField({
             name:'username',
             type:'string',
+            validation: (Rule) => Rule.required(),
         }),
         defineField({
             name:'email',
@@ -39,3 +46,4 @@ export const author=defineType({
         }
     }
 })
+

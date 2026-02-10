@@ -15,6 +15,7 @@ export const startup=defineType({
             options:{
                 source:'title'
             }
+            
         }),
         defineField({
             name:'author',
@@ -24,12 +25,19 @@ export const startup=defineType({
         defineField({
             name:'views',
             type:'number',
+            initialValue: 0,
         }),
 
         defineField({
             name:'description',
             type:'text',
         }),
+        defineField({
+             name: "username",
+             type: "string",
+             validation: (Rule) => Rule.required(),
+        }),
+
         defineField({
             name:'category',
             type:'string',
@@ -42,7 +50,7 @@ export const startup=defineType({
         }),
         defineField({
             name:'pitch',
-            type:'markdown',
+            type:'text',
         })
     ],
 });
