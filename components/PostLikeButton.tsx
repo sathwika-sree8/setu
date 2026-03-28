@@ -1,8 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import { likePost } from "@/app/actions/founderFeed";
 import { useUser } from "@clerk/nextjs";
+import { Heart } from "lucide-react";
+
+function subscribe() {
+  return () => {};
+}
 
 export function PostLikeButton({
   postId,
@@ -14,16 +19,16 @@ export function PostLikeButton({
   const { user, isSignedIn, isLoaded } = useUser();
 
   const [localLikes, setLocalLikes] = useState(likes);
+  const isHydrated = useSyncExternalStore(subscribe, () => true, () => false);
 
-  if (!isLoaded) {
-    return <span>Loading...</span>;
-  }
+  const userId = isHydrated && isLoaded && isSignedIn ? user?.id : undefined;
 
-  const userId = user?.id;
+  const isLiked = useMemo(
+    () => (userId ? localLikes.some((l) => l.userId === userId) : false),
+    [localLikes, userId]
+  );
 
-  const isLiked = userId
-    ? localLikes.some((l) => l.userId === userId)
-    : false;
+  const isInteractive = isHydrated && isLoaded;
 
   const handleLike = async () => {
     if (!userId) {
@@ -52,11 +57,16 @@ export function PostLikeButton({
   return (
     <button
       onClick={handleLike}
-      className={`border p-2 rounded cursor-pointer z-10 ${
-        isLiked ? "bg-red-100" : "bg-gray-100"
-      }`}
+      disabled={!isInteractive}
+      className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 ${
+        isLiked
+          ? "bg-orange-500/15 text-orange-300"
+          : "text-white/75 hover:bg-white/5 hover:text-white"
+      } ${!isInteractive ? "cursor-default opacity-50" : "cursor-pointer"}`}
+      aria-label="Like post"
     >
-      ❤️ {localLikes.length}
+      <Heart className={`h-4 w-4 ${isLiked ? "fill-orange-400 text-orange-400" : "text-white/70"}`} />
+      <span>{localLikes.length}</span>
     </button>
   );
 }

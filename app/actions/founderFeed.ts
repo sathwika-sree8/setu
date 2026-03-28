@@ -281,6 +281,49 @@ export async function likePost(formData: FormData) {
   }
 }
 
+export async function updatePost(postId: string, content: string, imageUrl?: string | null) {
+  const { userId } = await auth();
+  if (!userId) {
+    throw new Error("Unauthorized");
+  }
+
+  const post = await prisma.founderPost.findUnique({ where: { id: postId } });
+  if (!post || post.authorId !== userId) {
+    throw new Error("Unauthorized");
+  }
+
+  const data: { content: string; imageUrl?: string | null } = { content };
+  if (imageUrl !== undefined) {
+    data.imageUrl = imageUrl;
+  }
+
+  await prisma.founderPost.update({
+    where: { id: postId },
+    data,
+  });
+
+  revalidatePath("/feed");
+}
+
+export async function deletePost(postId: string) {
+  const { userId } = await auth();
+  if (!userId) {
+    throw new Error("Unauthorized");
+  }
+
+  const post = await prisma.founderPost.findUnique({ where: { id: postId } });
+  if (!post || post.authorId !== userId) {
+    throw new Error("Unauthorized");
+  }
+
+  // Delete related likes and comments first to satisfy FK constraints
+  await prisma.comment.deleteMany({ where: { postId } });
+  await prisma.like.deleteMany({ where: { postId } });
+  await prisma.founderPost.delete({ where: { id: postId } });
+
+  revalidatePath("/feed");
+}
+
 export async function getFeed(startupId: string) {
   const posts = await prisma.founderPost.findMany({
     where: { startupId },

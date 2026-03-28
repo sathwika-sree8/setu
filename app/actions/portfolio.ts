@@ -2,7 +2,10 @@
 
 import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
+import { calculateDilution, calculateIrr, calculateMoic, calculateOwnership, calculateStakeValue, calculateValuationGrowth, deriveStartupStatus, generateStartupAlerts } from "@/lib/finance";
 import { revalidatePath } from "next/cache";
+import { client } from "@/sanity/lib/client";
+import { STARTUP_BY_ID_QUERY } from "@/sanity/lib/queries";
 
 /**
  * ===========================================
@@ -49,9 +52,10 @@ export async function getInvestorPortfolioStats(investorId?: string) {
 
   if (!targetId) throw new Error("Unauthorized");
 
-  const [investments, founderRatings] = await Promise.all([
-    prisma.investment.findMany({
-      where: { investorId: targetId },
+  const [userRecord, founderRatings] = await Promise.all([
+    prisma.user.findUnique({
+      where: { clerkId: targetId },
+      select: { id: true },
     }),
     prisma.rating.findMany({
       where: {
@@ -61,10 +65,37 @@ export async function getInvestorPortfolioStats(investorId?: string) {
     }),
   ]);
 
+  const investorIds = userRecord?.id && userRecord.id !== targetId ? [targetId, userRecord.id] : [targetId];
+
+  const investments = await prisma.investment.findMany({
+    where: { investorId: { in: investorIds } },
+    include: {
+      startup: {
+        include: {
+          monthlyUpdates: {
+            orderBy: { createdAt: "desc" },
+            take: 2,
+          },
+          fundingRounds: {
+            orderBy: { date: "desc" },
+          },
+          investments: {
+            select: {
+              investorId: true,
+              shares: true,
+              amount: true,
+            },
+          },
+        },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
   // Get all accepted relationships to filter investments
   const acceptedRelationships = await prisma.startupRelationship.findMany({
     where: {
-      investorId: targetId,
+      investorId: { in: investorIds },
       status: "DEAL_ACCEPTED",
     },
     select: { startupId: true },
@@ -78,6 +109,251 @@ export async function getInvestorPortfolioStats(investorId?: string) {
   ).length;
 
   const totalInvested = investments.reduce((sum, inv) => sum + (inv.amount || 0), 0);
+  const today = new Date();
+  const startupIdsNeedingNames = Array.from(
+    new Set(
+      investments
+        .filter(
+          (investment) =>
+            !investment.startup?.name ||
+            investment.startup.name === "Unknown Startup" ||
+            investment.startup.name === "Untitled Startup",
+        )
+        .map((investment) => investment.startupId),
+    ),
+  );
+
+  const sanityStartupNameEntries = await Promise.all(
+    startupIdsNeedingNames.map(async (startupId) => {
+      const startupDoc = await client.fetch<{
+        title?: string | null;
+      } | null>(STARTUP_BY_ID_QUERY, { id: startupId });
+
+      return [startupId, startupDoc?.title ?? null] as const;
+    }),
+  );
+
+  const sanityStartupNames = new Map(sanityStartupNameEntries);
+
+  const investmentsByStartup = new Map<
+    string,
+    typeof investments
+  >();
+
+  for (const investment of investments) {
+    const existing = investmentsByStartup.get(investment.startupId) ?? [];
+    existing.push(investment);
+    investmentsByStartup.set(investment.startupId, existing);
+  }
+
+  const startupCards = Array.from(investmentsByStartup.entries()).map(
+    ([startupId, startupInvestments]) => {
+      const primaryInvestment = startupInvestments[0];
+      const startup = primaryInvestment.startup;
+      const latestUpdate = startup?.monthlyUpdates?.[0];
+      const previousUpdate = startup?.monthlyUpdates?.[1];
+      const latestRound = startup?.fundingRounds?.[0];
+      const previousRound = startup?.fundingRounds?.[1];
+      const totalShares = startup?.totalShares ?? 0;
+      const rawSharesOwned = startupInvestments.reduce(
+        (sum, investment) => sum + (investment.shares ?? 0),
+        0,
+      );
+      const equityFallback = startupInvestments.reduce(
+        (sum, investment) => sum + ((investment.equity ?? 0) / 100),
+        0,
+      );
+      const ownership =
+        rawSharesOwned > 0 && totalShares > 0
+          ? rawSharesOwned / totalShares
+          : equityFallback;
+      const estimatedSharesOwned =
+        rawSharesOwned > 0
+          ? rawSharesOwned
+          : ownership > 0 && totalShares > 0
+            ? ownership * totalShares
+            : 0;
+      const entryValuationCandidates = startupInvestments
+        .map((investment) => {
+          const explicitValuation =
+            investment.entryValuation ??
+            investment.postMoneyValuation ??
+            investment.preMoneyValuation ??
+            null;
+
+          if (explicitValuation != null && explicitValuation > 0) {
+            return explicitValuation;
+          }
+
+          if (investment.equity != null && investment.equity > 0) {
+            return investment.amount / (investment.equity / 100);
+          }
+
+          return null;
+        })
+        .filter((value): value is number => value != null && value > 0);
+      const blendedEntryValuation =
+        entryValuationCandidates.length > 0
+          ? entryValuationCandidates.reduce((sum, value) => sum + value, 0) /
+            entryValuationCandidates.length
+          : 0;
+      const valuation =
+        startup?.currentValuation ??
+        latestUpdate?.valuation ??
+        latestRound?.valuation ??
+        primaryInvestment.postMoneyValuation ??
+        primaryInvestment.preMoneyValuation ??
+        primaryInvestment.entryValuation ??
+        (blendedEntryValuation > 0 ? blendedEntryValuation : null);
+      const stakeValue = calculateStakeValue(ownership, valuation);
+      const amountInvested = startupInvestments.reduce(
+        (sum, investment) => sum + investment.amount,
+        0,
+      );
+      const unrealizedGain = stakeValue - amountInvested;
+      const valuationGrowth = calculateValuationGrowth(
+        valuation,
+        previousRound?.valuation ?? blendedEntryValuation ?? null,
+      );
+      const dilution = calculateDilution({
+        sharesOwned: estimatedSharesOwned,
+        totalShares: startup?.totalShares,
+        latestRoundSharesIssued: latestRound?.sharesIssued,
+      });
+      const hasOperationalMetrics =
+        latestUpdate != null ||
+        startup?.currentRevenue != null ||
+        startup?.currentGrowthRate != null ||
+        startup?.currentBurnRate != null ||
+        startup?.currentRunway != null;
+      const alerts = hasOperationalMetrics
+        ? generateStartupAlerts({
+            runway: latestUpdate?.runway ?? startup?.currentRunway ?? 0,
+            growthRate:
+              latestUpdate?.growthRate ??
+              previousUpdate?.growthRate ??
+              startup?.currentGrowthRate ??
+              0,
+            lastUpdatedAt: startup?.lastUpdatedAt ?? latestUpdate?.createdAt,
+            now: today,
+          })
+        : [{ label: "Inactive" as const, severity: "yellow" as const }];
+
+      const startupName =
+        startup?.name &&
+        startup.name !== "Unknown Startup" &&
+        startup.name !== "Untitled Startup"
+          ? startup.name
+          : sanityStartupNames.get(startupId) ?? "Unknown Startup";
+      const hasCapTable = totalShares > 0;
+
+      return {
+        startupId,
+        startupName,
+        revenue: latestUpdate?.revenue ?? startup?.currentRevenue ?? 0,
+        growthRate:
+          latestUpdate?.growthRate ??
+          previousUpdate?.growthRate ??
+          startup?.currentGrowthRate ??
+          0,
+        burnRate: latestUpdate?.burnRate ?? startup?.currentBurnRate ?? 0,
+        runway: latestUpdate?.runway ?? startup?.currentRunway ?? 0,
+        ownership,
+        sharesOwned: estimatedSharesOwned,
+        stakeValue,
+        currentValuation: valuation ?? 0,
+        entryValuation: blendedEntryValuation,
+        unrealizedGain,
+        valuationGrowth,
+        dilution,
+        hasCapTable,
+        hasOperationalMetrics,
+        lastUpdate:
+          startup?.lastUpdatedAt ??
+          latestUpdate?.createdAt ??
+          primaryInvestment.createdAt,
+        status: deriveStartupStatus(alerts),
+        alerts,
+        investmentId: primaryInvestment.id,
+        amountInvested,
+        round: primaryInvestment.round,
+        investmentDate: startupInvestments.reduce(
+          (earliest, investment) =>
+            investment.createdAt < earliest ? investment.createdAt : earliest,
+          primaryInvestment.createdAt,
+        ),
+        latestFundingRound: latestRound
+          ? {
+              name: latestRound.name,
+              date: latestRound.date,
+              valuation: latestRound.valuation,
+              investmentAmount: latestRound.investmentAmount,
+              sharesIssued: latestRound.sharesIssued,
+            }
+          : null,
+        fundingRounds: (startup?.fundingRounds ?? []).map((round) => ({
+          name: round.name,
+          date: round.date,
+          valuation: round.valuation,
+          investmentAmount: round.investmentAmount,
+          sharesIssued: round.sharesIssued,
+        })),
+        capTable: (() => {
+          const allInvestments = startup?.investments ?? [];
+          const knownInvestorShares = allInvestments.reduce(
+            (sum, row) => sum + (row.shares ?? 0),
+            0,
+          );
+          const effectiveKnownInvestorShares = Math.max(
+            knownInvestorShares,
+            estimatedSharesOwned,
+          );
+          const otherInvestorShares = Math.max(
+            0,
+            effectiveKnownInvestorShares - estimatedSharesOwned,
+          );
+          const founderTeamShares = Math.max(0, totalShares - effectiveKnownInvestorShares);
+
+          return [
+            {
+              name: "Founder / Team",
+              shares: founderTeamShares,
+              ownership: totalShares > 0 ? founderTeamShares / totalShares : 0,
+            },
+            {
+              name: "You",
+              shares: estimatedSharesOwned,
+              ownership,
+            },
+            {
+              name: "Others",
+              shares: otherInvestorShares,
+              ownership: totalShares > 0 ? otherInvestorShares / totalShares : 0,
+            },
+          ];
+        })(),
+      };
+    },
+  );
+
+  const portfolioValue = startupCards.reduce((sum, startup) => sum + startup.stakeValue, 0);
+  const unrealizedGains = startupCards.reduce((sum, startup) => sum + startup.unrealizedGain, 0);
+  const moic = calculateMoic(portfolioValue, totalInvested);
+  const irrCashflows = [
+    ...investments.map((investment) => ({
+      amount: -investment.amount,
+      date: investment.createdAt,
+    })),
+    ...(portfolioValue > 0
+      ? [
+          {
+            amount: portfolioValue,
+            date: today,
+          },
+        ]
+      : []),
+  ];
+  const irr = calculateIrr(irrCashflows);
   const avgFounderRating =
     founderRatings.length > 0
       ? founderRatings.reduce((sum, r) => sum + r.score, 0) / founderRatings.length
@@ -86,12 +362,17 @@ export async function getInvestorPortfolioStats(investorId?: string) {
   return {
     totalInvested,
     activeInvestments,
+    totalStartups: new Set(investments.map((investment) => investment.startupId)).size,
+    portfolioValue,
+    unrealizedGains,
+    moic,
+    irr,
     averageFounderRating: avgFounderRating,
     investmentCount: investments.length,
     ratingsCount: founderRatings.length,
-    // Additional data for detailed views
     investments,
     acceptedStartupIds: Array.from(acceptedStartupIds),
+    startupCards,
   };
 }
 
@@ -158,7 +439,6 @@ export async function getFounderMetrics(founderId?: string) {
   let updateFrequency = "No updates yet";
   if (updates.length > 1) {
     const firstUpdate = updates[updates.length - 1].createdAt;
-    const lastUpdate = updates[0].createdAt;
     const daysDiff = (now.getTime() - firstUpdate.getTime()) / (1000 * 60 * 60 * 24);
     const monthsDiff = Math.max(1, daysDiff / 30);
     const updatesPerMonth = updates.length / monthsDiff;
@@ -369,20 +649,15 @@ export async function getPortfolioChartData(investorId?: string) {
   // CHART 1: Portfolio Growth
   // =========================================
   
-  // Fetch all investments by this investor
   const investments = await prisma.investment.findMany({
     where: { investorId: targetId },
-    orderBy: { createdAt: "asc" },
-  });
-
-  // Get unique startup IDs from investments
-  const investedStartupIds = investments.map((inv) => inv.startupId);
-
-  // Fetch all REVENUE updates for startups they invested in
-  const revenueUpdates = await prisma.startupUpdate.findMany({
-    where: {
-      startupId: { in: investedStartupIds },
-      updateType: "REVENUE" as const,
+    include: {
+      startup: {
+        select: {
+          currentValuation: true,
+          totalShares: true,
+        },
+      },
     },
     orderBy: { createdAt: "asc" },
   });
@@ -390,54 +665,32 @@ export async function getPortfolioChartData(investorId?: string) {
   // Create timeline events from investments and revenue updates
   type TimelineEvent = {
     date: Date;
-    type: "investment" | "revenue";
+    type: "investment" | "valuation";
     amount: number;
   };
 
   const timelineEvents: TimelineEvent[] = [];
 
-  // Add investment events
   for (const inv of investments) {
     timelineEvents.push({
       date: inv.createdAt,
       type: "investment",
       amount: inv.amount,
     });
-  }
 
-  // Add revenue update events
-  for (const update of revenueUpdates) {
-    // Parse revenue amount from content (e.g., "$10K", "$50,000", "1M")
-    let revenueAmount = 0;
-    const revenueMatch = update.content.match(/\$\s*([\d,]+(?:\.\d+)?)\s*(K|M|KR|MR|B|BN)?/i);
-    
-    if (revenueMatch) {
-      const num = parseFloat(revenueMatch[1].replace(/,/g, ""));
-      const suffix = (revenueMatch[2] || "").toUpperCase();
-      
-      switch (suffix) {
-        case "K":
-        case "KR":
-          revenueAmount = num * 1000;
-          break;
-        case "M":
-        case "MR":
-          revenueAmount = num * 1000000;
-          break;
-        case "B":
-        case "BN":
-          revenueAmount = num * 1000000000;
-          break;
-        default:
-          revenueAmount = num;
-      }
-    }
-
-    timelineEvents.push({
-      date: update.createdAt,
-      type: "revenue",
-      amount: revenueAmount,
+    const ownership = calculateOwnership({
+      investorShares: inv.shares,
+      totalShares: inv.startup?.totalShares,
+      equityPercent: inv.equity,
     });
+    const stakeValue = calculateStakeValue(ownership, inv.startup?.currentValuation);
+    if (stakeValue > 0) {
+      timelineEvents.push({
+        date: new Date(),
+        type: "valuation",
+        amount: stakeValue,
+      });
+    }
   }
 
   // Sort all events by date
@@ -448,7 +701,6 @@ export async function getPortfolioChartData(investorId?: string) {
   let cumulativeValue = 0;
 
   for (const event of timelineEvents) {
-    // Add to cumulative value (investments add capital, revenue adds traction)
     cumulativeValue += event.amount;
 
     portfolioGrowth.push({

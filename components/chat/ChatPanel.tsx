@@ -23,11 +23,13 @@ export function ChatPanel({ isOpen, onClose, openChatId, onOpenChatHandled }: Ch
     isLoading,
     isSending,
     error,
+    activeParticipantOnline,
+    activeParticipantTyping,
     refreshChats,
     selectChat,
     sendMessage,
+    setTyping,
     closeChat,
-    clearError,
   } = useChat();
 
   // Find the active chat details
@@ -120,8 +122,11 @@ export function ChatPanel({ isOpen, onClose, openChatId, onOpenChatHandled }: Ch
               startupName={activeChat.startupName}
               messages={messages}
               currentUserId={user?.id || ""}
+              isParticipantOnline={activeParticipantOnline}
+              isParticipantTyping={activeParticipantTyping}
               onBack={handleBack}
               onSendMessage={sendMessage}
+              onTypingChange={setTyping}
               isSending={isSending}
             />
           ) : (

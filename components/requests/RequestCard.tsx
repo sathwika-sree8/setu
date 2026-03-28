@@ -46,11 +46,11 @@ export interface RequestCardProps {
 
 // Status badge configuration
 const statusConfig: Record<RequestStatus, { label: string; color: string; icon: typeof Clock }> = {
-  PENDING: { label: "Pending", color: "bg-yellow-100 text-yellow-800", icon: Clock },
-  IN_DISCUSSION: { label: "In Discussion", color: "bg-blue-100 text-blue-800", icon: MessageCircle },
-  DEAL_ACCEPTED: { label: "Deal Accepted", color: "bg-green-100 text-green-800", icon: CheckCircle },
-  DEAL_REJECTED: { label: "Rejected", color: "bg-red-100 text-red-800", icon: XCircle },
-  CLOSED: { label: "Archived", color: "bg-gray-100 text-gray-800", icon: Archive },
+  PENDING: { label: "Pending", color: "bg-orange-500/20 text-orange-300", icon: Clock },
+  IN_DISCUSSION: { label: "In Discussion", color: "bg-blue-500/20 text-blue-300", icon: MessageCircle },
+  DEAL_ACCEPTED: { label: "Deal Accepted", color: "bg-green-500/20 text-green-300", icon: CheckCircle },
+  DEAL_REJECTED: { label: "Rejected", color: "bg-red-500/20 text-red-300", icon: XCircle },
+  CLOSED: { label: "Archived", color: "bg-white/5 text-white/55", icon: Archive },
 };
 
 export function RequestCard({
@@ -177,11 +177,11 @@ export function RequestCard({
   const actions = getActions();
 
   return (
-    <div className="border rounded-lg p-4 bg-white shadow-sm hover:shadow-md transition-shadow">
+    <div className="border border-white/15 rounded-lg p-4 bg-[#131518] shadow-[0_12px_30px_rgba(0,0,0,0.22)] hover:shadow-[0_20px_42px_rgba(0,0,0,0.36)] hover:border-orange-400/35 transition-shadow duration-300">
       <div className="flex items-start gap-4">
         <Avatar className="h-12 w-12">
           <AvatarImage src={counterparty.image} alt={counterparty.name} />
-          <AvatarFallback className="bg-blue-100 text-blue-600 font-medium">
+          <AvatarFallback className="bg-orange-500/20 text-orange-400 font-medium">
             {counterparty.name
               ?.split(" ")
               .map((n) => n[0])
@@ -194,13 +194,13 @@ export function RequestCard({
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
             <div>
-              <p className="font-medium text-gray-900">
+              <p className="font-medium text-white">
                 {isIncoming ? counterparty.name : startupName}
               </p>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-white/65">
                 {isIncoming ? "wants to invest in" : "Investment in"}
               </p>
-              <p className="font-medium text-blue-600">
+              <p className="font-medium text-orange-300">
                 {isIncoming ? startupName : counterparty.name}
               </p>
             </div>
@@ -213,12 +213,12 @@ export function RequestCard({
             </div>
           </div>
 
-          <p className="text-xs text-gray-400 mt-2">
+          <p className="text-xs text-white/55 mt-2">
             {formatRelativeTime(activityTime)}
           </p>
 
           {lastMessage && (
-            <p className="text-sm text-gray-600 mt-2 line-clamp-1">
+            <p className="text-sm text-white/55 mt-2 line-clamp-1">
               {lastMessage}
             </p>
           )}
@@ -240,7 +240,7 @@ export function RequestCard({
 
         {unreadCount > 0 && (
           <div className="shrink-0">
-            <span className="h-5 min-w-5 px-1.5 rounded-full bg-blue-500 text-white text-xs font-medium flex items-center justify-center">
+            <span className="h-5 min-w-5 px-1.5 rounded-full bg-orange-500 text-white text-xs font-medium flex items-center justify-center">
               {unreadCount > 99 ? "99+" : unreadCount}
             </span>
           </div>

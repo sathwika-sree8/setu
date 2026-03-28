@@ -58,6 +58,7 @@ export interface SendMessageInput {
 export interface ChatListItem {
   id: string;
   relationshipId: string;
+  participantId?: string;
   participantName: string;
   participantImage?: string;
   startupName: string;
@@ -101,6 +102,21 @@ export interface GetChatsResponse {
 export interface GetMessagesResponse {
   messages: Message[];
   relationship: Pick<ChatRelationship, "id" | "startupId" | "founderId" | "investorId" | "status">;
+}
+
+export interface RealtimeRelationship {
+  id: string;
+  founderId: string;
+  investorId: string;
+}
+
+export interface RealtimeSessionResponse {
+  token: string;
+  userId: string;
+  expiresAt: number;
+  relationships: RealtimeRelationship[];
+  socketUrl: string | null;
+  supabaseRealtimeEnabled: boolean;
 }
 
 // Validation types

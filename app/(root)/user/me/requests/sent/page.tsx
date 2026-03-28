@@ -17,7 +17,7 @@ export default async function SentRequestsPage() {
   });
 
   if (requests.length === 0) {
-    return <p>No sent requests.</p>;
+    return <p className="text-black dark:text-white">No sent requests.</p>;
   }
 
   // Fetch startup details from Sanity for each request
@@ -31,19 +31,19 @@ export default async function SentRequestsPage() {
   return (
     <ul className="space-y-4">
       {enrichedRequests.map((req) => (
-        <li key={req.id} className="border p-4 rounded">
-          <h3 className="font-semibold">{req.startup?.title || "Unknown Startup"}</h3>
-          <p>Status: {req.status}</p>
-          <p>Sent on: {new Date(req.createdAt).toLocaleDateString()}</p>
+        <li key={req.id} className="rounded-xl border border-black/10 dark:border-white/10 bg-white dark:bg-black-200 p-4">
+          <h3 className="font-semibold text-black dark:text-white">{req.startup?.title || "Unknown Startup"}</h3>
+          <p className="text-black-200 dark:text-white/70">Status: {req.status}</p>
+          <p className="text-black-200 dark:text-white/70">Sent on: {new Date(req.createdAt).toLocaleDateString()}</p>
           
           {(req.status === "IN_DISCUSSION" || req.status === "DEAL_ACCEPTED") && (
-            <p className="text-gray-500 mt-2">
+            <p className="text-gray-500 dark:text-white/60 mt-2">
               Chat is available in the messages icon.
             </p>
           )}
           
           {req.status === "PENDING" && (
-            <p className="text-gray-500 mt-2">Waiting for founder approval...</p>
+            <p className="text-gray-500 dark:text-white/60 mt-2">Waiting for founder approval...</p>
           )}
         </li>
       ))}

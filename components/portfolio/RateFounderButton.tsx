@@ -155,9 +155,9 @@ export function RateFounderButton({
         variant="outline" 
         size="sm" 
         onClick={() => setOpen(true)}
-        className="hover:bg-yellow-50 hover:border-yellow-200"
+        className="hover:bg-primary-100 hover:border-primary transition-all duration-300"
       >
-        <Star className="h-4 w-4 mr-1 text-yellow-500" />
+        <Star className="h-4 w-4 mr-1 text-primary" />
         Rate Founder
       </Button>
       
@@ -168,8 +168,8 @@ export function RateFounderButton({
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-yellow-100 rounded-full">
-                  <Star className="h-5 w-5 text-yellow-600" />
+                <div className="p-2 bg-primary-100 rounded-full border border-primary/20">
+                  <Star className="h-5 w-5 text-primary" />
                 </div>
                 <div>
                   <h2 className="text-lg font-semibold">Rate Founder</h2>
@@ -250,7 +250,7 @@ export function RateFounderButton({
               <Button 
                 onClick={handleSubmit}
                 disabled={isSubmitting}
-                className="bg-yellow-500 hover:bg-yellow-600"
+                className="bg-primary hover:bg-primary/90"
               >
                 {isSubmitting ? (
                   <>

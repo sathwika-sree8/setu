@@ -1,17 +1,20 @@
 import { z } from 'zod';
 
-// Common image file extensions
-const IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp', '.ico', '.ico'];
-
+// Simple check that the string ends with a common image extension
+// (ignoring any query params). This is intentionally permissive
+// so CDN-style URLs like Wikimedia thumbs are accepted.
 function isLikelyImageUrl(url: string): boolean {
-  try {
-    const parsed = new URL(url.trim());
-    const pathname = parsed.pathname.toLowerCase();
-
-    return IMAGE_EXTENSIONS.some(ext => pathname.endsWith(ext));
-  } catch {
-    return false;
-  }
+  const cleaned = url.trim().toLowerCase().split("?")[0];
+  return (
+    cleaned.endsWith(".jpg") ||
+    cleaned.endsWith(".jpeg") ||
+    cleaned.endsWith(".png") ||
+    cleaned.endsWith(".gif") ||
+    cleaned.endsWith(".webp") ||
+    cleaned.endsWith(".svg") ||
+    cleaned.endsWith(".bmp") ||
+    cleaned.endsWith(".ico")
+  );
 }
 
 

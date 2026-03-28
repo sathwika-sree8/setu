@@ -1,76 +1,37 @@
-import Image from "next/image";
-import SearchForm from "@/components/SearchForm";
-import StartupCard, { StartupTypeCard } from "@/components/StartupCard";
-import { STARTUPS_QUERY } from "@/sanity/lib/queries";
-import { sanityFetch, SanityLive } from "@/sanity/lib/live";
 import { auth } from "@clerk/nextjs/server";
-import { SignInButton } from "@clerk/nextjs";
+import LandingPageClient from "@/components/LandingPageClient";
+import { StartupTypeCard } from "@/components/StartupCard";
+import AuthenticatedHomePage from "@/components/AuthenticatedHomePage";
+import { client, isSanityReady } from "@/sanity/lib/client";
+import { STARTUPS_QUERY } from "@/sanity/lib/queries";
 
 export default async function Home({
   searchParams,
 }: {
-  searchParams: Promise<{ query?: string }>;
+  searchParams?: Promise<{ query?: string }>;
 }) {
-  const query = (await searchParams).query;
-  const params = { search: query ?? "" };
-
   const { userId } = await auth();
 
-  // 🚫 Not logged in
+  // 🚫 NOT LOGGED IN → CARTA STYLE LANDING
   if (!userId) {
-    return (
-      <main className="container mx-auto mt-20 max-w-md text-center">
-        <h1 className="text-2xl font-bold mb-6">
-          Sign in to continue
-        </h1>
+    return <LandingPageClient />;
+  }
 
-        <SignInButton fallbackRedirectUrl="/">
-          <button className="btn-primary w-full">
-            Login / Sign up
-          </button>
-        </SignInButton>
+  const search = searchParams ? await searchParams : undefined;
+  const query = search?.query?.trim() || "";
+
+  if (!isSanityReady()) {
+    return (
+      <main className="section_container">
+        <h1 className="heading">All Startups</h1>
+        <p className="no-result mt-6">Sanity is not configured. Please check environment variables.</p>
       </main>
     );
   }
 
-  // ✅ Logged in
-  const { data: posts } = await sanityFetch({
-    query: STARTUPS_QUERY,
-    params,
+  const posts = await client.fetch(STARTUPS_QUERY, {
+    search: query ? `*${query}*` : "",
   });
 
-  return (
-    <>
-      <section className="pink_container">
-        <h1 className="heading">
-          Pitch Your Startup, <br />
-          Connect With Entrepreneurs
-        </h1>
-
-        <p className="sub-heading !max-w-3xl">
-          Submit Ideas, Vote on Pitches, and Collaborate to Build the Future Together.
-        </p>
-
-        <SearchForm query={query} />
-      </section>
-
-      <section className="section_container">
-        <p className="text-30-semibold">
-          {query ? `Search results for "${query}"` : "All Startups"}
-        </p>
-
-        <ul className="mt-7 card_grid">
-          {posts.length > 0 ? (
-            posts.map((post: StartupTypeCard) => (
-              <StartupCard key={post._id} post={post} />
-            ))
-          ) : (
-            <p className="no-results">No startups found.</p>
-          )}
-        </ul>
-      </section>
-
-      <SanityLive />
-    </>
-  );
+  return <AuthenticatedHomePage query={query} posts={posts as StartupTypeCard[]} />;
 }

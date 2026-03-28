@@ -69,6 +69,7 @@ export async function getMyChats(): Promise<{
         return {
           id: rel.id,
           relationshipId: rel.id,
+          participantId: otherUserId,
           participantName: participant?.name || "Unknown User",
           participantImage: participant?.image || undefined,
           startupName: startup?.title || "Unknown Startup",

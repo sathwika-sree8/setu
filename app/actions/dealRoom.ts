@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
+import { ensureStartupRecord } from "@/lib/startup-sync";
 
 /**
  * ===========================================
@@ -191,13 +192,31 @@ export async function acceptDeal(
     data: { status: "DEAL_ACCEPTED" },
   });
 
+  const startup = await ensureStartupRecord(relationship.startupId);
+
+  const normalizedEquity = equity && equity > 0 ? equity : undefined;
+  const postMoneyValuation =
+    normalizedEquity != null ? investmentAmount / (normalizedEquity / 100) : undefined;
+  const preMoneyValuation =
+    postMoneyValuation != null ? Math.max(postMoneyValuation - investmentAmount, 0) : undefined;
+  const derivedShares =
+    normalizedEquity != null &&
+    startup.totalShares != null &&
+    startup.totalShares > 0
+      ? (normalizedEquity / 100) * startup.totalShares
+      : undefined;
+
   // Create investor startup record
   await prisma.investment.create({
     data: {
       startupId: relationship.startupId,
       investorId: relationship.investorId,
       amount: investmentAmount,
-      equity: equity,
+      equity: normalizedEquity,
+      shares: derivedShares,
+      entryValuation: postMoneyValuation,
+      preMoneyValuation,
+      postMoneyValuation,
       termsUrl: termsUrl,
       // Provide sensible defaults for required enums in the current schema
       dealStage: dealStage ?? "PRE_SEED",
@@ -357,8 +376,8 @@ export async function acceptDealForm(formData: FormData) {
     investmentAmount,
     equity,
     termsUrl,
-    dealStage as any,
-    investmentType as any
+    dealStage as "PRE_SEED" | "SEED" | "SERIES_A" | "SERIES_B" | "SERIES_C" | "LATE" | "IPO" | undefined,
+    investmentType as "SAFE" | "CONVERTIBLE_NOTE" | "EQUITY" | "DIRECT_INVESTMENT" | undefined
   );
 }
 

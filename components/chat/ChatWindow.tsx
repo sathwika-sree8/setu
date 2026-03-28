@@ -15,8 +15,11 @@ interface ChatWindowProps {
   startupName: string;
   messages: Message[];
   currentUserId: string;
+  isParticipantOnline?: boolean;
+  isParticipantTyping?: boolean;
   onBack: () => void;
   onSendMessage: (relationshipId: string, content: string) => Promise<void>;
+  onTypingChange?: (relationshipId: string, isTyping: boolean) => void;
   isSending?: boolean;
 }
 
@@ -27,21 +30,24 @@ export function ChatWindow({
   startupName,
   messages,
   currentUserId,
+  isParticipantOnline = false,
+  isParticipantTyping = false,
   onBack,
   onSendMessage,
+  onTypingChange,
   isSending = false,
 }: ChatWindowProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Scroll to bottom when messages change
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, []);
+
+  // Scroll to bottom when messages change
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, scrollToBottom]);
 
   const handleSendMessage = useCallback(
     async (content: string) => {
@@ -109,7 +115,9 @@ export function ChatWindow({
             {participantName}
           </h3>
           <p className="text-xs text-gray-500 truncate">
-            {startupName}
+            {isParticipantTyping
+              ? "Typing..."
+              : `${startupName}${isParticipantOnline ? " • Online" : " • Offline"}`}
           </p>
         </div>
         
@@ -129,7 +137,7 @@ export function ChatWindow({
         className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50"
       >
         {/* Date separators and messages */}
-        {messageGroups.map((group, groupIndex) => (
+        {messageGroups.map((group) => (
           <div key={group.date}>
             {/* Date separator */}
             <div className="flex items-center justify-center mb-4">
@@ -165,6 +173,7 @@ export function ChatWindow({
       {/* Input */}
       <ChatInput
         onSend={handleSendMessage}
+        onTypingChange={(isTyping) => onTypingChange?.(relationshipId, isTyping)}
         isSending={isSending}
         placeholder="Type a message..."
       />

@@ -45,8 +45,8 @@ export default async function RequestsPage() {
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Investment Requests</h1>
-        <p className="text-gray-500 mt-2">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Investment Requests</h1>
+        <p className="text-gray-500 dark:text-white/60 mt-2">
           Manage your investment requests and track deal progress.
         </p>
       </div>
@@ -55,6 +55,7 @@ export default async function RequestsPage() {
         receivedRequests={transformedReceived}
         sentRequests={transformedSent}
         archivedRequests={transformedArchived}
+        initialIsSignedIn={Boolean(userId)}
       />
     </div>
   );

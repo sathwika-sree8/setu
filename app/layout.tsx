@@ -6,8 +6,8 @@ import "easymde/dist/easymde.min.css";
 import { Toaster } from "@/components/ui/toaster";
 import { ClerkProvider } from "@clerk/nextjs";
 import AuthSync from "@/components/AuthSync";
-import FloatingChat from "@/components/chat/FloatingChat";
-import FloatingAIBot from "@/app/actions/ai/FloatingAIBot";
+import BottomDock from "@/components/chat/BottomDock";
+import { auth } from "@clerk/nextjs/server";
 
 const workSans = localFont({
   display: "swap",
@@ -58,21 +58,23 @@ export const metadata: Metadata = {
   description: "Pitch, Vote and Grow",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const { userId } = await auth();
+  const authedBodyClass = userId ? "dark bg-black text-white" : "";
+
   return (
     <html lang="en">
       <body
-        className={workSans.variable}
+        className={`${workSans.variable} ${authedBodyClass}`}
       >
         <ClerkProvider>
           <AuthSync />
-          {children}
-          <FloatingChat />
-          <FloatingAIBot />
+          <div className="pb-[60px]">{children}</div>
+          <BottomDock />
           <Toaster />
         </ClerkProvider>
       </body>

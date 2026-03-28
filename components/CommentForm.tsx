@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { addComment } from "@/app/actions/founderFeed";
 import { useUser } from "@clerk/nextjs";
+import { Send } from "lucide-react";
 
 type CommentFormProps = {
   postId: string;
@@ -45,19 +46,17 @@ export function CommentForm({ postId, onCommentAdded }: CommentFormProps) {
         placeholder="Add a comment..."
         value={text}
         onChange={(e) => setText(e.target.value)}
-        className="w-full resize-none outline-none border rounded p-2"
+        className="w-full resize-none rounded-lg border border-white/15 bg-black/30 p-3 text-sm text-white outline-none transition-all duration-200 placeholder:text-white/45 focus:border-orange-400/60"
         rows={2}
       />
-      <button type="submit" className="bg-blue-500 hover:bg-blue-700 text-white px-2 py-1 rounded mt-2 cursor-pointer" aria-label="Post comment">
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 24 24"
-    fill="currentColor"
-    className="w-4 h-4"
-  >
-    <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
-  </svg>
-</button>
+      <button
+        type="submit"
+        className="mt-2 inline-flex cursor-pointer items-center gap-2 rounded-lg bg-orange-500 px-3 py-2 text-sm font-medium text-white transition-all duration-200 hover:bg-orange-400"
+        aria-label="Post comment"
+      >
+        <Send className="h-4 w-4" />
+        <span>Post</span>
+      </button>
 
     </form>
   );

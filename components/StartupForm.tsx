@@ -1,7 +1,6 @@
 "use client"
 
 import React,{useState, useActionState} from 'react'
-import { Input } from '@/components/ui/input';
 import {Textarea} from "@/components/ui/textarea";
 import MDEditor from '@uiw/react-md-editor';
 import { Button } from '@/components/ui/button';
@@ -12,13 +11,21 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { createPitch } from '@/lib/action';
 
+type StartupFormState = {
+    error: string;
+    status: string;
+    _id?: string;
+}
+
 const StartupForm = () => {
     const [errors,setErrors]=useState<Record<string,string>>({});
     const [pitch,setPitch]=useState("");
     const { toast } = useToast();
     const router = useRouter();
-    const handleFormSubmit = async (prevState: { error: string; status: string }, formData:FormData) => {
+    const handleFormSubmit = async (prevState: StartupFormState, formData:FormData) => {
         try{
+                // Clear any previous field errors before validating
+                setErrors({});
             const formValues={
                 title: formData.get("title") as string,
                 description: formData.get("description") as string,
@@ -27,16 +34,20 @@ const StartupForm = () => {
                 pitch,
             }
             await formSchema.parseAsync(formValues);
-            console.log(formValues);
-            const result=await createPitch(prevState, formData, pitch)
-           //console.log(result)
-           if(result.status=='SUCCESS'){
+               const result=await createPitch(prevState, formData, pitch)
+               if(result.status === 'SUCCESS' && result._id){
             toast({
                 title:"SUCCESS",
                 description:"Your startup pitch has been created successfully",
             });
-            router.push(`/startup/${result._id}`)
-           }
+                router.push(`/startup/${result._id}?created=1`)
+               } else if (result.status === 'ERROR') {
+                toast({
+                    title:'Error',
+                    description:result.error || 'Failed to create startup. Please try again.',
+                    variant: 'destructive',
+                });
+               }
            return result; 
         }catch(error){
              if(error instanceof z.ZodError){
@@ -52,12 +63,12 @@ const StartupForm = () => {
              }
              toast({
                     title:'Error',
-                    description:'An unexpected error has occured',
+                    description:'An unexpected error has occurred',
                     variant: 'destructive',
                 });
              return {
                 ...prevState,
-                error: "An unexpected error has occured",
+                error: "An unexpected error has occurred",
                 status: "ERROR"
              };
         }
@@ -143,6 +154,9 @@ const StartupForm = () => {
         {isPending ? "Submitting..." : "Submit Startup Pitch"}
         <Send className="size-6 ml-2"/>
          </Button>
+                 {state.status === "ERROR" && state.error && (
+                        <p className="startup-form_error mt-3">{state.error}</p>
+                 )}
     </form>
   ) ; 
 };

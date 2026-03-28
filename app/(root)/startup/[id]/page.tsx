@@ -23,10 +23,13 @@ const md = markdownit();
 
 const Page = async ({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams?: Promise<{ created?: string }>;
 }) => {
   const { id } = await params;
+  const search = searchParams ? await searchParams : undefined;
   const { userId } = await auth();
 
   // Validate id is a string
@@ -65,6 +68,7 @@ const Page = async ({
 
   const editorPosts = playlist?.select || [];
   const parsedContent = md.render(post.pitch || "");
+  const justCreated = search?.created === "1";
 
   return (
     <>
@@ -77,6 +81,12 @@ const Page = async ({
 
       {/* Main */}
       <section className="section_container">
+        {justCreated && (
+          <div className="mb-4 rounded-2xl border-[3px] border-black bg-primary-100 px-4 py-3 text-sm font-medium text-black shadow-100">
+            🎉 Your startup has been created successfully.
+          </div>
+        )}
+
         <img
           src={post.image}
           alt="thumbnail"

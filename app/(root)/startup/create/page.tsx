@@ -4,7 +4,7 @@ import { auth } from "@clerk/nextjs/server";
 import { redirect } from 'next/navigation';
 const page = async() => {
     const session = await auth();
-    if(!session) redirect("/");
+  if(!session.userId) redirect("/");
   return (
     <>
     <section className="pink_container !min-h-[230px]">

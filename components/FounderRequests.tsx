@@ -141,12 +141,12 @@ export function FounderRequests({ founderId }: FounderRequestsProps) {
   if (isLoading) {
     return (
       <div className="mt-6">
-        <h3 className="text-xl font-bold">Investment Requests</h3>
+        <h3 className="text-xl font-bold text-white">Investment Requests</h3>
         <div className="space-y-4 mt-4">
           {[1, 2].map((i) => (
-            <div key={i} className="border p-4 rounded animate-pulse">
-              <div className="h-4 bg-gray-200 rounded w-1/3 mb-2" />
-              <div className="h-4 bg-gray-200 rounded w-1/4" />
+            <div key={i} className="border border-white/15 p-4 rounded bg-[#131518] animate-pulse">
+              <div className="h-4 bg-white/10 rounded w-1/3 mb-2" />
+              <div className="h-4 bg-white/10 rounded w-1/4" />
             </div>
           ))}
         </div>
@@ -160,7 +160,7 @@ export function FounderRequests({ founderId }: FounderRequestsProps) {
 
   return (
     <div className="mt-6">
-      <h3 className="text-xl font-bold">Investment Requests</h3>
+      <h3 className="text-xl font-bold text-white">Investment Requests</h3>
 
       <div className="space-y-4 mt-4">
         <AcceptDealModal

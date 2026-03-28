@@ -12,12 +12,10 @@ model User {
   clerkId   String   @unique
   name      String?
   email     String?
-  role      String?  // INVESTOR | FOUNDER
+  role      String? // INVESTOR | FOUNDER
   createdAt DateTime @default(now())
 
-  investments Investment[]
-  posts      FounderPost[]
-  updates    StartupUpdate[]
+  monthlyUpdates MonthlyUpdate[]
 }
 
 model Startup {
@@ -30,9 +28,56 @@ model Startup {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  investments  Investment[]
+  investments Investment[]
   updates     StartupUpdate[]
-  posts       FounderPost[]
+
+  monthlyUpdates MonthlyUpdate[]
+  fundingRounds  FundingRound[]
+
+  currentRevenue  Float?
+  currentGrowthRate Float?
+  currentBurnRate Float?
+  currentRunway   Float?
+  currentValuation Float?
+  lastUpdatedAt   DateTime?
+  totalShares     Float?
+  revenueType     RevenueType?     @default(OTHER)
+  growthStage     String?
+  valuationSource ValuationSource? @default(AUTO_ESTIMATE)
+  manualValuation Float?
+}
+
+model MonthlyUpdate {
+  id           String   @id @default(cuid())
+  startupId    String
+  founderId    String
+
+  month        String
+  year         Int
+
+  revenue      Float
+  expenses     Float
+  cashInBank   Float
+
+  users        Int
+  newCustomers Int
+
+  burnRate     Float
+  runway       Float
+  growthRate   Float
+  valuation    Float?
+
+  achievements String
+  challenges   String
+
+  createdAt    DateTime @default(now())
+
+  startup Startup @relation(fields: [startupId], references: [id])
+  founder User    @relation(fields: [founderId], references: [id])
+
+  @@index([startupId])
+  @@index([founderId])
+  @@index([createdAt])
 }
 
 model FounderPost {
@@ -42,7 +87,6 @@ model FounderPost {
   content   String
   imageUrl  String?
   createdAt DateTime @default(now())
-
   likes    Like[]
   comments Comment[]
 }
@@ -117,6 +161,19 @@ enum InvestmentType {
   DIRECT_INVESTMENT
 }
 
+enum RevenueType {
+  SAAS
+  MARKETPLACE
+  FINTECH
+  OTHER
+}
+
+enum ValuationSource {
+  LAST_FUNDING_ROUND
+  AUTO_ESTIMATE
+  MANUAL
+}
+
 enum UpdateType {
   REVENUE
   FUNDRAISING
@@ -137,6 +194,8 @@ model Investment {
   startupId          String
   amount             Float
   equity             Float?
+  shares             Float?
+  entryValuation     Float?
   preMoneyValuation  Float?
   postMoneyValuation Float?
   dealStage          DealStage
@@ -146,11 +205,28 @@ model Investment {
   notes              String?
   createdAt          DateTime       @default(now())
 
-  investor User    @relation(fields: [investorId], references: [id])
-  startup Startup @relation(fields: [startupId], references: [id])
+  startup  Startup @relation(fields: [startupId], references: [id])
 
   @@index([investorId])
   @@index([startupId])
+}
+
+model FundingRound {
+  id               String   @id @default(cuid())
+  startupId        String
+  name             String
+  date             DateTime
+  investmentAmount Float
+  valuation        Float
+  sharesIssued     Float
+  leadInvestor     String?
+  notes            String?
+  createdAt        DateTime @default(now())
+
+  startup Startup @relation(fields: [startupId], references: [id])
+
+  @@index([startupId])
+  @@index([date])
 }
 
 model Rating {
@@ -172,7 +248,7 @@ model PrivateNote {
   investorId String
   startupId  String
   content    String
-  createdAt DateTime @default(now())
+  createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
   @@unique([investorId, startupId])
@@ -189,6 +265,8 @@ model StartupUpdate {
   createdAt  DateTime         @default(now())
   updatedAt  DateTime         @updatedAt
 
+  startup Startup @relation(fields: [startupId], references: [id])
+
   @@index([startupId])
   @@index([createdAt])
 }
@@ -202,14 +280,15 @@ model Notification {
   isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
 }
+
 model AIDocument {
-  id         String   @id @default(cuid())
+  id         String                      @id @default(cuid())
   startupId  String?
-  type       String   // STARTUP | UPDATE | REVENUE
-  visibility String   // PUBLIC | INVESTORS_ONLY
+  type       String // STARTUP | UPDATE | REVENUE
+  visibility String // PUBLIC | INVESTORS_ONLY
   content    String
   embedding  Unsupported("vector(1536)")
-  createdAt  DateTime @default(now())
+  createdAt  DateTime                    @default(now())
 
   @@index([startupId])
 }
@@ -217,11 +296,10 @@ model AIDocument {
 model AIChatMemory {
   id        String   @id @default(cuid())
   userId    String
-  role      String   // INVESTOR | FOUNDER
+  role      String // INVESTOR | FOUNDER
   question  String
   answer    String
   createdAt DateTime @default(now())
 
   @@index([userId])
 }
-

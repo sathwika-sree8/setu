@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 
 interface ChatInputProps {
   onSend: (content: string) => Promise<void>;
+  onTypingChange?: (isTyping: boolean) => void;
   isSending?: boolean;
   placeholder?: string;
   disabled?: boolean;
@@ -15,6 +16,7 @@ interface ChatInputProps {
 
 export function ChatInput({
   onSend,
+  onTypingChange,
   isSending = false,
   placeholder = "Type a message...",
   disabled = false,
@@ -39,12 +41,13 @@ export function ChatInput({
 
       // Clear input immediately for optimistic UI
       setContent("");
+      onTypingChange?.(false);
       inputRef.current?.focus();
 
       // Send message
       await onSend(trimmedContent);
     },
-    [content, isSending, disabled, onSend]
+    [content, isSending, disabled, onSend, onTypingChange]
   );
 
   const handleKeyDown = useCallback(
@@ -62,9 +65,11 @@ export function ChatInput({
 
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      setContent(e.target.value);
+      const nextValue = e.target.value;
+      setContent(nextValue);
+      onTypingChange?.(nextValue.trim().length > 0);
     },
-    []
+    [onTypingChange]
   );
 
   const isEmpty = content.trim().length === 0;

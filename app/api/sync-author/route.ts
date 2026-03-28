@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { writeClient } from "@/sanity/lib/write-client";
 import { client } from "@/sanity/lib/client";
+import { prisma } from "@/lib/prisma";
 
 export async function POST(req: Request) {
   try {
@@ -9,6 +10,16 @@ export async function POST(req: Request) {
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    // Ensure user exists in Prisma database
+    await prisma.user.upsert({
+      where: { clerkId: userId },
+      update: {},
+      create: {
+        id: userId,
+        clerkId: userId,
+      },
+    });
 
     const body = await req.json();
     const { email, name, image } = body;

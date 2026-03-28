@@ -2,14 +2,17 @@
 
 import React, { useEffect, useState } from 'react'
 import { cn, formatDate } from '@/lib/utils';
-import { EyeIcon } from 'lucide-react';
+import { EyeIcon, MoreHorizontal } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from './ui/button';
 import { Author, Startup } from '@/sanity/types';
 import { Skeleton } from "@/components/ui/skeleton";
 import { useUser } from "@clerk/nextjs";
-import { requestDealRoom } from "@/app/actions/dealRoom"
+import { requestDealRoom } from "@/app/actions/dealRoom";
+import { useRouter } from "next/navigation";
+import { updateStartupBasic, deleteStartup } from "@/lib/action";
+import { useToast } from "@/hooks/use-toast";
 
 export type StartupTypeCard = Omit<Startup, "author"> & { author?: Author};
 
@@ -32,9 +35,21 @@ const StartupCard = ({ post }: { post: StartupTypeCard }) => {
   } = post;
 
   const { user, isLoaded: isUserLoaded } = useUser();
+  const router = useRouter();
+  const { toast } = useToast();
   const [mounted, setMounted] = useState(false);
   const [requested, setRequested] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [editValues, setEditValues] = useState({
+    title: title || "",
+    description: description || "",
+    category: category || "",
+    image: image || "",
+  });
 
   // Use useEffect to avoid hydration mismatch
   useEffect(() => {
@@ -86,14 +101,79 @@ const StartupCard = ({ post }: { post: StartupTypeCard }) => {
   }
 
   return (
-    <li className="startup-card group">
+    <li className="startup-card group relative">
         <div className="flex-between">
             <p className="startup_card_date">
                 {formatDate(_createdAt)}
             </p>
-            <div className="flex gap-1.5">
-              <EyeIcon className="size-6 text-primary"/>
-              <span className="text-16-medium">{views}</span>
+            <div className="flex items-center gap-2">
+              <div className="flex gap-1.5">
+                <EyeIcon className="size-6 text-primary"/>
+                <span className="text-16-medium">{views}</span>
+              </div>
+
+              {isFounder && (
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setMenuOpen((o) => !o)}
+                    className="p-1 rounded-full hover:bg-white/60"
+                  >
+                    <MoreHorizontal className="size-4" />
+                  </button>
+                  {menuOpen && (
+                    <div className="absolute right-0 mt-1 w-40 rounded-md border border-black bg-white text-sm shadow-200 z-20">
+                      <button
+                        type="button"
+                        className="block w-full px-3 py-2 text-left hover:bg-gray-50"
+                        onClick={() => {
+                          setMenuOpen(false);
+                          setEditOpen(true);
+                        }}
+                      >
+                        Edit startup
+                      </button>
+                      <button
+                        type="button"
+                        className="block w-full px-3 py-2 text-left text-red-600 hover:bg-red-50"
+                        disabled={isDeleting}
+                        onClick={async () => {
+                          setMenuOpen(false);
+                          if (!confirm("Delete this startup? This cannot be undone.")) return;
+                          setIsDeleting(true);
+                          try {
+                            const res = await deleteStartup(_id);
+                            if (res?.ok) {
+                              toast({
+                                title: "Startup deleted",
+                                description: "Your startup has been deleted successfully.",
+                              });
+                              router.refresh();
+                            } else {
+                              toast({
+                                title: "Error",
+                                description: "Failed to delete startup. Please try again.",
+                                variant: "destructive",
+                              });
+                            }
+                          } catch (e) {
+                            console.error("Failed to delete startup", e);
+                            toast({
+                              title: "Error",
+                              description: "Failed to delete startup. Please try again.",
+                              variant: "destructive",
+                            });
+                          } finally {
+                            setIsDeleting(false);
+                          }
+                        }}
+                      >
+                        {isDeleting ? "Deleting..." : "Delete startup"}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
         </div>
         <div className="flex-between mt-5 gap-5">
@@ -147,6 +227,99 @@ const StartupCard = ({ post }: { post: StartupTypeCard }) => {
             : "Invest"}
         </button>
         )}
+
+          {editOpen && (
+            <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/40">
+              <div className="w-full max-w-lg rounded-2xl border-[3px] border-black bg-white p-5 space-y-4">
+                <h2 className="text-lg font-semibold">Edit startup</h2>
+
+                <input
+                  className="w-full border px-3 py-2 rounded-md text-sm"
+                  value={editValues.title}
+                  onChange={(e) =>
+                    setEditValues((v) => ({ ...v, title: e.target.value }))
+                  }
+                  placeholder="Title"
+                />
+                <textarea
+                  className="w-full border px-3 py-2 rounded-md text-sm"
+                  rows={3}
+                  value={editValues.description}
+                  onChange={(e) =>
+                    setEditValues((v) => ({ ...v, description: e.target.value }))
+                  }
+                  placeholder="Description"
+                />
+                <input
+                  className="w-full border px-3 py-2 rounded-md text-sm"
+                  value={editValues.category}
+                  onChange={(e) =>
+                    setEditValues((v) => ({ ...v, category: e.target.value }))
+                  }
+                  placeholder="Category"
+                />
+                <input
+                  className="w-full border px-3 py-2 rounded-md text-sm"
+                  value={editValues.image}
+                  onChange={(e) =>
+                    setEditValues((v) => ({ ...v, image: e.target.value }))
+                  }
+                  placeholder="Image URL"
+                />
+
+                <div className="flex justify-end gap-2 text-sm">
+                  <button
+                    type="button"
+                    className="px-3 py-1.5 rounded-md border border-gray-300 hover:bg-gray-50"
+                    onClick={() => setEditOpen(false)}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-primary disabled:opacity-60 disabled:cursor-not-allowed"
+                    disabled={isSaving}
+                    onClick={async () => {
+                      setIsSaving(true);
+                      try {
+                        const res = await updateStartupBasic(_id, {
+                          title: editValues.title,
+                          description: editValues.description,
+                          category: editValues.category,
+                          image: editValues.image,
+                        });
+                        if (res?.ok) {
+                          toast({
+                            title: "Startup updated",
+                            description: "Your startup details have been saved.",
+                          });
+                          setEditOpen(false);
+                          router.refresh();
+                        } else {
+                          toast({
+                            title: "Error",
+                            description: "Failed to update startup. Please try again.",
+                            variant: "destructive",
+                          });
+                        }
+                      } catch (e) {
+                        console.error("Failed to update startup", e);
+                        toast({
+                          title: "Error",
+                          description: "Failed to update startup. Please try again.",
+                          variant: "destructive",
+                        });
+                      } finally {
+                        setIsSaving(false);
+                      }
+                    }}
+                  >
+                    {isSaving ? "Saving..." : "Save changes"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
     </li>
   )
 }

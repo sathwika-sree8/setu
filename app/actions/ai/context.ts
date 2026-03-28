@@ -29,6 +29,15 @@ export function investmentsToContext(investments: Array<{
   return `Your Investments:\n\n${investmentList}\n\nTotal investments: ${investments.length}`;
 }
 
+export function investorSummaryToContext(summary: {
+  totalInvested: number;
+  activeInvestments: number;
+  investmentCount: number;
+}): string {
+  const total = summary.totalInvested.toLocaleString();
+  return `Portfolio Summary:\n\nTotal invested: $${total}\nActive investments: ${summary.activeInvestments}\nTotal deals: ${summary.investmentCount}`;
+}
+
 export function startupsToContext(startups: Array<{
   id: string;
   name: string;
@@ -70,4 +79,67 @@ export function updatesToContext(updates: Array<{
   }).join("\n");
 
   return `Startup Updates:\n\n${updateList}`;
+}
+
+export function startupDetailsToContext(args: {
+  startup: {
+    id: string;
+    name: string;
+    sector: string | null;
+    description: string | null;
+    website: string | null;
+    createdAt: Date;
+  } | null;
+  investments: Array<{
+    id: string;
+    amount: number;
+    equity: number | null;
+    dealStage: string;
+    investmentType: string;
+    createdAt: Date;
+  }>;
+  updates: Array<{
+    id: string;
+    title: string | null;
+    content: string;
+    updateType: string;
+    createdAt: Date;
+  }>;
+}): string {
+  const { startup, investments, updates } = args;
+
+  if (!startup) {
+    return "No data is available for the selected startup.";
+  }
+
+  const createdAt = new Date(startup.createdAt).toLocaleDateString();
+
+  const header = `Startup: ${startup.name}
+Sector: ${startup.sector || "N/A"}
+Website: ${startup.website || "N/A"}
+Created: ${createdAt}
+
+Description:
+${startup.description || "No description available."}`;
+
+  const investmentsContext = investmentsToContext(
+    investments.map((inv) => ({
+      id: inv.id,
+      amount: inv.amount,
+      startupId: startup.id,
+      dealStage: inv.dealStage,
+      investmentType: inv.investmentType,
+      createdAt: inv.createdAt,
+      startup: {
+        id: startup.id,
+        name: startup.name,
+        sector: startup.sector,
+        description: startup.description,
+      },
+    }))
+  );
+
+  const updatesContext = updatesToContext(updates);
+
+  return `${header}\n\n${investmentsContext}\n\n${updatesContext}`;
 }

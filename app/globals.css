@@ -20,27 +20,27 @@
     }
 
     .text-30-bold {
-        @apply text-[30px] font-bold text-black;
+        @apply text-[30px] font-bold text-black dark:text-white;
     }
 
     .text-30-semibold {
-        @apply font-semibold text-[30px] text-black;
+        @apply font-semibold text-[30px] text-black dark:text-white;
     }
 
     .text-26-semibold {
-        @apply font-semibold text-[26px] text-black;
+        @apply font-semibold text-[26px] text-black dark:text-white;
     }
 
     .text-24-black {
-        @apply text-[24px] font-black text-black;
+        @apply text-[24px] font-black text-black dark:text-white;
     }
 
     .text-20-medium {
-        @apply font-medium text-[20px] text-black;
+        @apply font-medium text-[20px] text-black dark:text-white;
     }
 
     .text-16-medium {
-        @apply font-medium text-[16px] text-black;
+        @apply font-medium text-[16px] text-black dark:text-white;
     }
 
     .text-14-normal {
@@ -48,15 +48,15 @@
     }
 
     .pink_container {
-        @apply w-full bg-primary min-h-[530px] pattern flex justify-center items-center flex-col py-10 px-6;
+        @apply w-full bg-primary dark:bg-black min-h-[530px] pattern flex justify-center items-center flex-col py-10 px-6;
     }
 
     .tag {
-        @apply bg-secondary px-6 py-3 font-work-sans font-bold rounded-sm uppercase relative tag-tri;
+        @apply bg-secondary dark:bg-orange-500 dark:text-white px-6 py-3 font-work-sans font-bold rounded-sm uppercase relative tag-tri;
     }
 
     .heading {
-        @apply uppercase bg-black px-6 py-3 font-work-sans font-extrabold text-white sm:text-[54px] sm:leading-[64px] text-[36px] leading-[46px] max-w-5xl text-center my-5;
+        @apply uppercase bg-black dark:bg-transparent px-6 dark:px-0 py-3 dark:py-0 font-work-sans font-extrabold text-white sm:text-[54px] sm:leading-[64px] text-[36px] leading-[46px] max-w-5xl text-center my-5;
     }
 
     .sub-heading {
@@ -76,7 +76,7 @@
     }
 
     .no-result {
-        @apply text-black-100 text-sm font-normal;
+        @apply text-black-100 dark:text-white/60 text-sm font-normal;
     }
 
     /* profile */
@@ -85,15 +85,15 @@
     }
 
     .profile_card {
-        @apply w-80 px-6 pb-6 pt-20 flex flex-col justify-center items-center bg-primary border-[5px] border-black shadow-100 rounded-[30px] relative z-0 h-fit max-lg:w-full;
+        @apply w-80 px-6 pb-8 pt-24 flex flex-col justify-center items-center bg-[#111111] border-[5px] border-black shadow-200 rounded-[30px] relative z-0 h-fit max-lg:w-full;
     }
 
     .profile_title {
-        @apply w-11/12 bg-white border-[5px] border-black rounded-[20px] px-5 py-3 absolute -top-9 after:absolute after:content-[''] after:-top-1 after:right-0 after:-skew-y-6 after:bg-black after:-z-[1] after:rounded-[20px] after:w-full after:h-[60px] before:absolute before:content-[''] before:-bottom-1 before:left-0  before:-skew-y-6 before:w-full before:h-[60px] before:bg-black  before:-z-[1] before:rounded-[20px] shadow-100;
+        @apply w-11/12 bg-orange-500 border-[5px] border-black rounded-[20px] px-5 py-3 absolute -top-9 after:absolute after:content-[''] after:-top-1 after:right-0 after:-skew-y-6 after:bg-[#6b2d00] after:-z-[1] after:rounded-[20px] after:w-full after:h-[60px] before:absolute before:content-[''] before:-bottom-1 before:left-0 before:-skew-y-6 before:w-full before:h-[60px] before:bg-[#6b2d00] before:-z-[1] before:rounded-[20px] shadow-100;
     }
 
     .profile_image {
-        @apply rounded-full object-cover border-[3px] border-black;
+        @apply rounded-full object-cover border-[4px] border-orange-500 shadow-[0_0_0_4px_#000];
     }
 
     /* idea details */
@@ -120,28 +120,33 @@
 
     /* searchform */
     .search-form {
-        @apply max-w-3xl w-full min-h-[80px] bg-white border-[5px] border-black rounded-[80px] text-[24px] mt-8 px-5 flex flex-row items-center gap-5;
+        @apply max-w-3xl w-full min-h-[80px] bg-white dark:bg-black-200 border-[5px] dark:border-white/10 border-black rounded-[80px] text-[24px] mt-8 px-5 flex flex-row items-center gap-5;
     }
 
     .search-input {
-        @apply flex-1 font-bold placeholder:font-semibold placeholder:text-black-100 w-full h-auto outline-none;
+        @apply flex-1 font-bold text-black dark:text-white placeholder:font-semibold placeholder:text-black-100 dark:placeholder:text-white/40 w-full h-auto outline-none bg-transparent;
     }
 
     .search-btn {
-        @apply size-[50px] rounded-full bg-black flex justify-center items-center !important;
+        @apply size-[50px] rounded-full bg-black dark:bg-orange-500 flex justify-center items-center !important;
     }
 
     /* startupcard */
     .startup-card {
-        @apply bg-white border-[5px] border-black py-6 px-5 rounded-[22px] shadow-200 hover:border-primary transition-all duration-500 hover:shadow-300 hover:bg-primary-100;
+        @apply bg-white dark:bg-black-200 border-[5px] dark:border-white/10 border-black py-6 px-5 rounded-[22px] shadow-200 dark:shadow-none hover:border-primary dark:hover:border-orange-500 transition-all duration-500 hover:shadow-300 dark:hover:shadow-none hover:bg-primary-100 dark:hover:bg-black;
     }
 
     .startup-card_date {
-        @apply font-medium text-[16px] bg-primary-100 px-4 py-2 rounded-full group-hover:bg-white-100;
+        @apply font-medium text-[16px] bg-primary-100 dark:bg-black/30 dark:text-white/80 px-4 py-2 rounded-full group-hover:bg-white-100 dark:group-hover:bg-black/50;
+    }
+
+    /* Back-compat: StartupCard currently uses underscore version */
+    .startup_card_date {
+        @apply font-medium text-[16px] bg-primary-100 dark:bg-black/30 dark:text-white/80 px-4 py-2 rounded-full group-hover:bg-white-100 dark:group-hover:bg-black/50;
     }
 
     .startup-card_desc {
-        @apply font-normal text-[16px] line-clamp-2 my-3 text-black-100 break-all;
+        @apply font-normal text-[16px] line-clamp-2 my-3 text-black-100 dark:text-white/60 break-all;
     }
 
     .startup-card_img {
@@ -149,7 +154,7 @@
     }
 
     .startup-card_btn {
-        @apply rounded-full bg-black-200 font-medium text-[16px] text-white px-5 py-3 !important;
+        @apply rounded-full bg-black-200 dark:bg-orange-500 font-medium text-[16px] text-white px-5 py-3 !important;
     }
 
     .startup-card_skeleton {
@@ -214,6 +219,20 @@
     .tag-tri {
         @apply before:content-[''] before:absolute before:top-2 before:left-2 before:border-t-[10px] before:border-t-black before:border-r-[10px] before:border-r-transparent after:content-[''] after:absolute after:bottom-2 after:right-2 after:border-b-[10px] after:border-b-black after:border-l-[10px] after:border-l-transparent;
     }
+
+    /* global buttons used across app */
+    .btn-primary {
+        @apply rounded-full bg-primary dark:bg-orange-500 text-white text-sm font-semibold px-5 py-2 border-[3px] border-black dark:border-white/10 shadow-200 dark:shadow-none hover:shadow-300 dark:hover:shadow-none transition disabled:opacity-50;
+    }
+
+    .btn-secondary {
+        @apply rounded-full bg-white dark:bg-transparent text-black dark:text-white text-sm font-semibold px-5 py-2 border-[3px] border-black dark:border-white/20 shadow-100 dark:shadow-none hover:bg-white-100 dark:hover:bg-white/5 transition disabled:opacity-50;
+    }
+}
+
+/* Disable the yellow pattern in dark mode (clean black/orange aesthetic) */
+.dark .pattern {
+    background-image: none;
 }
 
 .w-md-editor-toolbar {

@@ -34,12 +34,13 @@ interface RequestsTabsProps {
   receivedRequests?: EnrichedRequest[];
   sentRequests?: EnrichedRequest[];
   archivedRequests?: EnrichedRequest[];
+  initialIsSignedIn?: boolean;
 }
 
 // Loading skeleton for request cards
 function RequestSkeleton() {
   return (
-    <div className="border rounded-lg p-4 bg-white shadow-sm">
+    <div className="border border-white/15 rounded-lg p-4 bg-[#131518] shadow-[0_12px_30px_rgba(0,0,0,0.22)]">
       <div className="flex items-start gap-4">
         <Skeleton className="h-12 w-12 rounded-full" />
         <div className="flex-1 space-y-2">
@@ -59,7 +60,8 @@ function RequestSkeleton() {
 export function RequestsTabs({ 
   receivedRequests = [], 
   sentRequests = [], 
-  archivedRequests = [] 
+  archivedRequests = [],
+  initialIsSignedIn = true,
 }: RequestsTabsProps) {
   const { user, isSignedIn } = useUser();
   const router = useRouter();
@@ -69,6 +71,7 @@ export function RequestsTabs({
   const [isLoading, setIsLoading] = useState(false);
   const [dealModalOpen, setDealModalOpen] = useState(false);
   const [dealRelationshipId, setDealRelationshipId] = useState<string | null>(null);
+  const [canViewRequests, setCanViewRequests] = useState(initialIsSignedIn);
   const [requests, setRequests] = useState<{
     received: EnrichedRequest[];
     sent: EnrichedRequest[];
@@ -87,6 +90,13 @@ export function RequestsTabs({
       archived: archivedRequests,
     });
   }, [receivedRequests, sentRequests, archivedRequests]);
+
+  // Keep first render deterministic with server auth state, then sync with Clerk client state.
+  useEffect(() => {
+    if (typeof isSignedIn === "boolean") {
+      setCanViewRequests(isSignedIn);
+    }
+  }, [isSignedIn]);
 
   // Calculate counts
   const counts = {
@@ -231,21 +241,21 @@ export function RequestsTabs({
 
     return (
       <div className="text-center py-12">
-        <div className="mx-auto w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-          <svg className="h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div className="mx-auto w-16 h-16 rounded-full bg-[#171a20] flex items-center justify-center mb-4">
+          <svg className="h-8 w-8 text-white/55" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
           </svg>
         </div>
-        <h3 className="text-lg font-medium text-gray-900 mb-1">{messages[type].title}</h3>
-        <p className="text-gray-500 max-w-sm mx-auto">{messages[type].description}</p>
+        <h3 className="text-lg font-medium text-white mb-1">{messages[type].title}</h3>
+        <p className="text-white/65 max-w-sm mx-auto">{messages[type].description}</p>
       </div>
     );
   };
 
-  if (!isSignedIn) {
+  if (!canViewRequests) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-500">Please sign in to view your requests.</p>
+        <p className="text-white/65">Please sign in to view your requests.</p>
       </div>
     );
   }
@@ -258,27 +268,27 @@ export function RequestsTabs({
         onClose={() => setDealModalOpen(false)}
       />
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-      <TabsList className="grid w-full grid-cols-3 mb-6">
-        <TabsTrigger value="received" className="relative">
+      <TabsList className="grid w-full grid-cols-3 mb-6 bg-[#131518] border border-white/15">
+        <TabsTrigger value="received" className="relative data-[state=active]:bg-orange-500">
           Received
           {counts.received > 0 && (
-            <span className="absolute -top-1 -right-1 h-5 min-w-5 px-1.5 rounded-full bg-blue-500 text-white text-xs font-medium flex items-center justify-center">
+            <span className="absolute -top-1 -right-1 h-5 min-w-5 px-1.5 rounded-full bg-orange-500 text-white text-xs font-medium flex items-center justify-center">
               {counts.received}
             </span>
           )}
         </TabsTrigger>
-        <TabsTrigger value="sent" className="relative">
+        <TabsTrigger value="sent" className="relative data-[state=active]:bg-orange-500">
           Sent
           {counts.sent > 0 && (
-            <span className="absolute -top-1 -right-1 h-5 min-w-5 px-1.5 rounded-full bg-gray-500 text-white text-xs font-medium flex items-center justify-center">
+            <span className="absolute -top-1 -right-1 h-5 min-w-5 px-1.5 rounded-full bg-orange-500 text-white text-xs font-medium flex items-center justify-center">
               {counts.sent}
             </span>
           )}
         </TabsTrigger>
-        <TabsTrigger value="archived" className="relative">
+        <TabsTrigger value="archived" className="relative data-[state=active]:bg-orange-500">
           Archived
           {counts.archived > 0 && (
-            <span className="absolute -top-1 -right-1 h-5 min-w-5 px-1.5 rounded-full bg-gray-300 text-gray-700 text-xs font-medium flex items-center justify-center">
+            <span className="absolute -top-1 -right-1 h-5 min-w-5 px-1.5 rounded-full bg-orange-500 text-white text-xs font-medium flex items-center justify-center">
               {counts.archived}
             </span>
           )}
